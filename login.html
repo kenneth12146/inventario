@@ -1,37 +1,90 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login de Negocio</title>
-  <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="./css/estilos.css">
 </head>
+
 <body>
-  <header class="topbar"><img src="img/logo.png" class="logo"><h1>Acceso al Negocio</h1>
-    <nav><a class="link" href="index.html">Inicio</a><a class="link" href="registro.html">Crear cuenta</a></nav>
+  <header class="topbar">
+    <img src="./img/logo.png" class="logo" alt="logo">
+    <h1>Acceso al Negocio</h1>
+    <nav>
+      <a class="link" href="./registro.html">Crear cuenta</a>
+    </nav>
   </header>
+
   <main class="container narrow">
-    <form id="loginNegocioForm" class="card">
+    <form id="loginForm" class="card">
       <h2>Cuenta del negocio</h2>
-      <label>Correo</label><input type="email" id="correo" required placeholder="correo@negocio.com">
-      <label>Contraseña</label><input type="password" id="password" required placeholder="••••••••">
+      <label>Correo</label>
+      <input type="email" id="correo" required>
+      <label>Contraseña</label>
+      <input type="password" id="pass" required>
       <button class="btn" type="submit">Entrar</button>
+      <p class="muted">Ejemplo: admin@tuempresa.com / 1234</p>
     </form>
   </main>
+
   <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
-  <script src="js/ui.js"></script>
-  <script type="module" src="js/firebase.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/auth.js"></script>
+
   <script>
-    UI.requireOnlineBanner();
-    document.getElementById('loginNegocioForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        const correo = document.getElementById('correo').value.trim();
-        const pass = document.getElementById('password').value;
-        await Auth.loginNegocio(correo, pass);
-        location.href = 'acceso.html';
-      } catch(err) { UI.toast(err.message || 'No fue posible iniciar sesión'); }
-    });
+    window.UI = {
+      toast(m){ console.log("[toast]", m); }
+    };
   </script>
-</body></html>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
+      authDomain: "inventario-b4431.firebaseapp.com",
+      projectId: "inventario-b4431",
+      storageBucket: "inventario-b4431.firebasestorage.app",
+      messagingSenderId: "229641140897",
+      appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
+      measurementId: "G-RG2Y7DXCEC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window.FB = { db, collection, query, where, getDocs };
+    console.log("✅ Firebase inicializado en login");
+
+    async function cargarScript(src){
+      return new Promise((resolve, reject)=>{
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = () => { console.log("Cargado:", src); resolve(); };
+        s.onerror = () => reject(`Error cargando ${src}`);
+        document.body.appendChild(s);
+      });
+    }
+
+    (async ()=>{
+      await cargarScript("./js/auth.js");
+      console.log("✅ auth.js listo");
+
+      const form = document.getElementById("loginForm");
+      form.addEventListener("submit", async (e)=>{
+        e.preventDefault();
+        const correo = document.getElementById("correo").value.trim();
+        const pass = document.getElementById("pass").value.trim();
+        try {
+          const sesion = await Auth.login(correo, pass);
+          UI.toast("Inicio de sesión correcto");
+          console.log("Sesión:", sesion);
+          location.href = "./seleccionar_rol.html";
+        } catch(err){
+          UI.toast(err.message);
+          console.error("❌", err);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrador</title>
+  <link rel="stylesheet" href="./css/dashboard.css">
+</head>
+<body>
+  <header class="topbar">
+    <img src="./img/logo.png" class="logo" alt="logo">
+    <h1>Panel Administrador</h1>
+    <button id="logoutBtn" class="btn">Cerrar sesión</button>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Gestión de Inventario</h2>
+
+      <form id="formProducto">
+        <input id="codigo" placeholder="Código" required>
+        <input id="nombre" placeholder="Nombre del producto" required>
+        <input id="cantidad" type="number" placeholder="Cantidad" required min="1">
+        <input id="precioCompra" type="number" placeholder="Precio compra" required min="1">
+        <input id="precioVenta" type="number" placeholder="Precio venta" required min="1">
+        <button class="btn" type="submit">Guardar</button>
+      </form>
+
+      <table id="tablaProductos">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Compra</th>
+            <th>Venta</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { 
+      getFirestore, collection, doc, addDoc, deleteDoc, updateDoc, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
+      authDomain: "inventario-b4431.firebaseapp.com",
+      projectId: "inventario-b4431",
+      storageBucket: "inventario-b4431.firebasestorage.app",
+      messagingSenderId: "229641140897",
+      appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
+      measurementId: "G-RG2Y7DXCEC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const sesion = JSON.parse(localStorage.getItem("sesion_negocio") || "{}");
+    if (!sesion.id) {
+      alert("Debes iniciar sesión primero.");
+      location.href = "./login.html";
+    }
+
+    const refProductos = collection(db, `negocios/${sesion.id}/productos`);
+    const tbody = document.querySelector("#tablaProductos tbody");
+
+    // Mostrar inventario en tiempo real
+    onSnapshot(refProductos, (snap) => {
+      tbody.innerHTML = "";
+      snap.forEach(docu => {
+        const p = docu.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.codigo}</td>
+          <td>${p.nombre}</td>
+          <td>${p.cantidad}</td>
+          <td>${p.precioCompra}</td>
+          <td>${p.precioVenta}</td>
+          <td>
+            <button class="btn editar" data-id="${docu.id}" data-info='${JSON.stringify(p)}'>✏️</button>
+            <button class="btn borrar" data-id="${docu.id}">🗑</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Botones de edición
+      document.querySelectorAll(".editar").forEach(btn => {
+        btn.onclick = () => {
+          const prod = JSON.parse(btn.dataset.info);
+          document.getElementById("codigo").value = prod.codigo;
+          document.getElementById("nombre").value = prod.nombre;
+          document.getElementById("cantidad").value = prod.cantidad;
+          document.getElementById("precioCompra").value = prod.precioCompra;
+          document.getElementById("precioVenta").value = prod.precioVenta;
+          document.getElementById("formProducto").dataset.editando = btn.dataset.id;
+        };
+      });
+
+      // Botones de eliminación
+      document.querySelectorAll(".borrar").forEach(btn => {
+        btn.onclick = async () => {
+          if (confirm("¿Seguro que deseas eliminar este producto?")) {
+            await deleteDoc(doc(db, `negocios/${sesion.id}/productos/${btn.dataset.id}`));
+          }
+        };
+      });
+    });
+
+    // Agregar o editar producto
+    document.getElementById("formProducto").onsubmit = async (e) => {
+      e.preventDefault();
+      const producto = {
+        codigo: codigo.value.trim(),
+        nombre: nombre.value.trim(),
+        cantidad: parseInt(cantidad.value),
+        precioCompra: parseFloat(precioCompra.value),
+        precioVenta: parseFloat(precioVenta.value),
+        fecha: new Date().toISOString()
+      };
+
+      const idEditar = e.target.dataset.editando;
+
+      if (idEditar) {
+        await updateDoc(doc(db, `negocios/${sesion.id}/productos/${idEditar}`), producto);
+        delete e.target.dataset.editando;
+        alert("Producto actualizado correctamente.");
+      } else {
+        await addDoc(refProductos, producto);
+        alert("Producto agregado correctamente.");
+      }
+
+      e.target.reset();
+    };
+
+    logoutBtn.onclick = () => {
+      localStorage.removeItem("sesion_negocio");
+      localStorage.removeItem("rolActivo");
+      location.href = "./login.html";
+    };
+  </script>
+</body>
+</html>

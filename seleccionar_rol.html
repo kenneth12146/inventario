@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seleccionar Rol</title>
+  <link rel="stylesheet" href="./css/estilos.css">
+</head>
+<body>
+  <header class="topbar">
+    <img src="./img/logo.png" class="logo" alt="logo">
+    <h1>Seleccionar Rol</h1>
+  </header>
+
+  <main class="container narrow">
+    <div class="card">
+      <h2>¿A qué panel deseas acceder?</h2>
+
+      <div style="display:flex; gap:15px; margin-top:20px;">
+        <button id="btnAdmin" class="btn">Administrador</button>
+        <button id="btnCajero" class="btn">Cajero</button>
+      </div>
+    </div>
+
+    <form id="formRol" class="card" style="display:none; margin-top:20px;">
+      <h3 id="tituloRol">Ingresar como...</h3>
+      <label>Usuario</label>
+      <input id="usuario" required>
+      <label>Contraseña</label>
+      <input id="clave" type="password" required>
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
+      authDomain: "inventario-b4431.firebaseapp.com",
+      projectId: "inventario-b4431",
+      storageBucket: "inventario-b4431.firebasestorage.app",
+      messagingSenderId: "229641140897",
+      appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
+      measurementId: "G-RG2Y7DXCEC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const sesion = JSON.parse(localStorage.getItem("sesion_negocio") || "{}");
+    if (!sesion.id) {
+      alert("Primero debes iniciar sesión.");
+      location.href = "./login.html";
+    }
+
+    const btnAdmin = document.getElementById("btnAdmin");
+    const btnCajero = document.getElementById("btnCajero");
+    const formRol = document.getElementById("formRol");
+    const tituloRol = document.getElementById("tituloRol");
+
+    let rolSeleccionado = "";
+
+    btnAdmin.onclick = () => {
+      rolSeleccionado = "administrador";
+      formRol.style.display = "block";
+      tituloRol.textContent = "Iniciar sesión como Administrador";
+    };
+
+    btnCajero.onclick = () => {
+      rolSeleccionado = "cajero";
+      formRol.style.display = "block";
+      tituloRol.textContent = "Iniciar sesión como Cajero";
+    };
+
+    formRol.onsubmit = async (e) => {
+      e.preventDefault();
+      const usuario = document.getElementById("usuario").value.trim();
+      const clave = document.getElementById("clave").value.trim();
+
+      try {
+        const ref = doc(db, "negocios", sesion.id);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) throw new Error("Negocio no encontrado");
+        const data = snap.data();
+        const usuarios = data.usuarios || [];
+
+        // Buscar el usuario dentro del array del negocio
+        const match = usuarios.find(u => u.usuario === usuario && u.passwordHash === clave);
+
+        if (!match) {
+          alert("Usuario o clave incorrectos.");
+          return;
+        }
+
+        // Validar que el rol coincida con el botón que se eligió
+        if (match.rol !== rolSeleccionado) {
+          alert("El usuario no pertenece a este rol.");
+          return;
+        }
+
+        localStorage.setItem("rolActivo", match.rol);
+
+        if (match.rol === "administrador") {
+          location.href = "./dashboard_admin.html";
+        } else if (match.rol === "cajero") {
+          location.href = "./dashboard_cajero.html";
+        }
+
+      } catch (err) {
+        console.error("Error validando rol:", err);
+        alert("Error al verificar el rol.");
+      }
+    };
+  </script>
+</body>
+</html>

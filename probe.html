@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Probe Firestore</title>
+<style>
+body{font-family:system-ui;background:#0f1216;color:#e6e6e6;margin:0;padding:24px}
+.card{background:#12161c;border:1px solid #2a2f38;border-radius:12px;padding:16px;max-width:720px}
+.btn{background:#1f6feb;border:1px solid #2b6fe1;color:#fff;padding:10px 14px;border-radius:10px;cursor:pointer}
+pre{white-space:pre-wrap;background:#0b0e11;border:1px solid #2a2f38;border-radius:8px;padding:12px}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Probe Firestore</h1>
+  <p>Prueba directa al backend. Si esto falla, es Firebase, no tu app.</p>
+  <button class="btn" id="btnWrite">Escribir en <code>probes</code></button>
+  <button class="btn" id="btnRead">Leer <code>negocios</code></button>
+  <h3>Salida</h3>
+  <pre id="out">Esperando…</pre>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
+  authDomain: "inventario-b4431.firebaseapp.com",
+  projectId: "inventario-b4431",
+  storageBucket: "inventario-b4431.firebasestorage.app",
+  messagingSenderId: "229641140897",
+  appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
+  measurementId: "G-RG2Y7DXCEC"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const out = document.getElementById('out');
+
+document.getElementById('btnWrite').onclick = async ()=>{
+  try{
+    const ref = await addDoc(collection(db,'probes'), { ok:true, ts: Date.now() });
+    out.textContent = 'Escritura OK: id=' + ref.id;
+  }catch(e){
+    out.textContent = 'ERROR escritura: ' + (e.message||e);
+    console.error(e);
+  }
+};
+
+document.getElementById('btnRead').onclick = async ()=>{
+  try{
+    const snap = await getDocs(collection(db,'negocios'));
+    out.textContent = 'Lectura OK: negocios=' + snap.size;
+  }catch(e){
+    out.textContent = 'ERROR lectura: ' + (e.message||e);
+    console.error(e);
+  }
+};
+</script>
+</body>
+</html>

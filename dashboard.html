@@ -1,58 +1,126 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Panel Administrador</title>
-  <link rel="stylesheet" href="css/estilos.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
 </head>
+
 <body>
-  <header class="topbar"><img src="img/logo.png" class="logo"><h1>Panel del Administrador</h1>
-    <nav><a class="link" href="ventas.html">Ir a Ventas</a><a class="link" href="#" onclick="Auth.logoutInterno();">Salir</a></nav>
+  <header class="topbar">
+    <img src="./img/logo.png" class="logo" alt="logo">
+    <h1>Panel de Inventario</h1>
+    <button id="logoutBtn" class="btn">Cerrar sesión</button>
   </header>
+
   <main class="container">
-    <section class="grid-2">
-      <div class="card">
-        <h2>Productos</h2>
-        <div class="row">
-          <input id="filtroProducto" placeholder="Buscar por código o nombre">
-          <button class="btn" onclick="Productos.renderLista();">Buscar</button>
-          <button class="btn" onclick="Productos.formNuevo();">Nuevo</button>
-          <button class="btn warn" onclick="Productos.exportarCSV();">Exportar CSV</button>
-          <button class="btn light" onclick="Productos.importarCSV();">Importar CSV</button>
-        </div>
-        <div id="listaProductos"></div>
-      </div>
-      <div class="card">
-        <h2>Usuarios internos</h2>
-        <div class="row"><button class="btn" onclick="Usuarios.formNuevo();">Nuevo usuario</button></div>
-        <div id="listaUsuarios"></div>
-      </div>
-    </section>
-    <section class="grid-2">
-      <div class="card">
-        <h2>Caja</h2><div id="estadoCaja"></div>
-        <div class="row"><button class="btn" onclick="Ventas.uiAperturaCaja();">Abrir caja</button><button class="btn warn" onclick="Ventas.uiCierreCaja();">Cerrar caja</button></div>
-      </div>
-      <div class="card">
-        <h2>Datos (backup)</h2>
-        <div class="row"><button class="btn" onclick="DataIO.exportarJSON();">Exportar base</button><button class="btn light" onclick="DataIO.importarJSON();">Importar base</button></div>
-        <div id="reporte"></div>
-      </div>
+    <section class="card">
+      <h2>Inventario</h2>
+      <form id="addForm">
+        <input type="text" id="codigo" placeholder="Código" required>
+        <input type="text" id="nombre" placeholder="Nombre del producto" required>
+        <input type="number" id="cantidad" placeholder="Cantidad" required>
+        <input type="number" id="precioCompra" placeholder="Precio compra" required>
+        <input type="number" id="precioVenta" placeholder="Precio venta" required>
+        <button type="submit" class="btn">Agregar</button>
+      </form>
+
+      <table id="tablaProductos">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Compra</th>
+            <th>Venta</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </section>
   </main>
+
   <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
-  <script src="js/ui.js"></script>
-  <script type="module" src="js/firebase.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/productos.js"></script>
-  <script src="js/usuarios.js"></script>
-  <script src="js/ventas.js"></script>
-  <script src="js/dataio.js"></script>
-  <script>
-    Auth.guardRol('administrador');
-    Productos.init();
-    Usuarios.init();
-    Ventas.init();
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
+      authDomain: "inventario-b4431.firebaseapp.com",
+      projectId: "inventario-b4431",
+      storageBucket: "inventario-b4431.firebasestorage.app",
+      messagingSenderId: "229641140897",
+      appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
+      measurementId: "G-RG2Y7DXCEC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window.FB = { db, collection, addDoc, getDocs, onSnapshot };
+
+    async function cargarScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.body.appendChild(s);
+      });
+    }
+
+    await cargarScript("./js/productos.js");
+
+    const sesion = JSON.parse(localStorage.getItem("sesion_negocio") || "{}");
+    if (!sesion.id) {
+      alert("No hay sesión activa. Redirigiendo...");
+      location.href = "./login.html";
+      return;
+    }
+
+    const tbody = document.querySelector("#tablaProductos tbody");
+
+    // Actualizar tabla dinámicamente con onSnapshot
+    const refProductos = collection(db, `negocios/${sesion.id}/productos`);
+    onSnapshot(refProductos, (snap) => {
+      tbody.innerHTML = "";
+      snap.forEach(doc => {
+        const p = doc.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.codigo}</td>
+          <td>${p.nombre}</td>
+          <td>${p.cantidad}</td>
+          <td>${p.precioCompra}</td>
+          <td>${p.precioVenta}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      console.log("📡 Inventario actualizado:", snap.size, "productos");
+    });
+
+    // Agregar nuevo producto
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const producto = {
+        codigo: document.getElementById("codigo").value.trim(),
+        nombre: document.getElementById("nombre").value.trim(),
+        cantidad: parseInt(document.getElementById("cantidad").value),
+        precioCompra: parseFloat(document.getElementById("precioCompra").value),
+        precioVenta: parseFloat(document.getElementById("precioVenta").value),
+        fecha: new Date().toISOString()
+      };
+      await Productos.agregarProducto(sesion.id, producto);
+      e.target.reset();
+    });
+
+    // Cerrar sesión
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("sesion_negocio");
+      location.href = "./login.html";
+    });
   </script>
-</body></html>
+</body>
+</html>

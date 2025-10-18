@@ -1,89 +1,76 @@
-// js/storage.js - Firestore-backed global Storage
-(function(){
-  const FB = window.FB;
-  if(!FB){ console.error('Firebase not loaded'); return; }
+// js/storage.js
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc } 
+  from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-  async function sha256(text){
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
-  }
+import { app } from "./firebase.js";
+const db = getFirestore(app);
 
-  const Storage = {
-    // Obtener negocio por email
-    async getNegocioByEmail(email){
-      const q = FB.query(FB.collection(FB.db, 'negocios'), FB.where('correo', '==', email));
-      const snap = await FB.getDocs(q);
-      let negocio = null;
-      snap.forEach(docu => { negocio = { id: docu.id, ...docu.data() }; });
-      return negocio;
-    },
+// Utilidad para obtener el ID del negocio actual
+function negocioID() {
+  const sesion = JSON.parse(localStorage.getItem("sesion_negocio") || "{}");
+  return sesion.id || null;
+}
 
-    async getNegocioById(id){
-      const docu = await FB.getDoc(FB.doc(FB.db, 'negocios', id));
-      if(!docu.exists()) return null;
-      return { id: docu.id, ...docu.data() };
-    },
+// ===================== PRODUCTOS =====================
 
-    async registrarNegocio(nombre, correo, passPlain){
-      if(!nombre || !correo || !passPlain) throw new Error('Faltan datos');
-      const exist = await this.getNegocioByEmail(correo);
-      if(exist) throw new Error('Ese correo ya está registrado');
-      const passHash = await sha256(passPlain);
-      const nuevo = {
-        nombre, correo, passwordHash: passHash,
-        usuarios: [
-          { usuario:'admin', passwordHash: passHash, rol:'administrador' },
-          { usuario:'cajero', passwordHash: '', rol:'cajero' }
-        ],
-        productos: [], ventas: [], auditoria: [], caja: { abierta:false, saldoInicial:0, movimientos:[] }
-      };
-      const ref = await FB.addDoc(FB.collection(FB.db, 'negocios'), nuevo);
-      return ref.id;
-    },
+// Guardar un nuevo producto
+export async function agregarProducto(producto) {
+  const idNeg = negocioID();
+  if (!idNeg) throw new Error("No hay negocio activo.");
+  const ref = collection(db, `negocios/${idNeg}/productos`);
+  await addDoc(ref, producto);
+}
 
-    // Usuarios
-    async setUsuarios(negId, usuarios){
-      const neg = await this.getNegocioById(negId);
-      if(!neg) throw new Error('Negocio no encontrado');
-      neg.usuarios = usuarios;
-      await FB.setDoc(FB.doc(FB.db, 'negocios', negId), neg);
-      return true;
-    },
+// Editar un producto existente
+export async function editarProducto(id, producto) {
+  const idNeg = negocioID();
+  if (!idNeg) throw new Error("No hay negocio activo.");
+  const ref = doc(db, `negocios/${idNeg}/productos/${id}`);
+  await updateDoc(ref, producto);
+}
 
-    // Productos
-    async listProductos(negId, filtro=''){
-      const neg = await this.getNegocioById(negId);
-      if(!neg) return [];
-      const f = filtro.trim().toLowerCase();
-      const arr = (neg.productos||[]);
-      return arr.filter(p => !f || p.codigo.toLowerCase().includes(f) || p.nombre.toLowerCase().includes(f));
-    },
-    async setProductos(negId, productos){
-      const neg = await this.getNegocioById(negId);
-      if(!neg) throw new Error('Negocio no encontrado');
-      neg.productos = productos;
-      await FB.setDoc(FB.doc(FB.db, 'negocios', negId), neg);
-      return true;
-    },
+// Eliminar un producto
+export async function eliminarProducto(id) {
+  const idNeg = negocioID();
+  if (!idNeg) throw new Error("No hay negocio activo.");
+  const ref = doc(db, `negocios/${idNeg}/productos/${id}`);
+  await deleteDoc(ref);
+}
 
-    // Caja y ventas
-    async setCaja(negId, caja){
-      const neg = await this.getNegocioById(negId);
-      neg.caja = caja;
-      await FB.setDoc(FB.doc(FB.db, 'negocios', negId), neg);
-    },
-    async addVenta(negId, venta, productosActualizados, movCaja){
-      const neg = await this.getNegocioById(negId);
-      neg.ventas = (neg.ventas||[]); neg.ventas.push(venta);
-      if(productosActualizados) neg.productos = productosActualizados;
-      neg.caja = neg.caja || { abierta:false, saldoInicial:0, movimientos:[] };
-      if(movCaja) neg.caja.movimientos.push(movCaja);
-      await FB.setDoc(FB.doc(FB.db, 'negocios', negId), neg);
-    }
-  };
+// ===================== USUARIOS =====================
 
-  window.Storage = Storage;
-})();
+export async function agregarUsuario(usuario) {
+  const idNeg = negocioID();
+  const ref = doc(db, "negocios", idNeg);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) throw new Error("Negocio no encontrado");
+  const data = snap.data();
+  const usuarios = data.usuarios || [];
+  usuarios.push(usuario);
+  await updateDoc(ref, { usuarios });
+}
+
+// ===================== VENTAS =====================
+
+export async function registrarVenta(venta) {
+  const idNeg = negocioID();
+  const ref = collection(db, `negocios/${idNeg}/ventas`);
+  await addDoc(ref, venta);
+}
+
+// ===================== CAJA =====================
+
+export async function actualizarCaja(data) {
+  const idNeg = negocioID();
+  const ref = doc(db, "negocios", idNeg);
+  await updateDoc(ref, { caja: data });
+}
+
+// ===================== EXPORTAR / IMPORTAR =====================
+
+export async function obtenerTodo() {
+  const idNeg = negocioID();
+  const ref = doc(db, "negocios", idNeg);
+  const snap = await getDoc(ref);
+  return snap.exists() ? snap.data() : null;
+}

@@ -1,61 +1,57 @@
-// js/auth.js
-const Auth = (function(){
-  const SESSION_KEY_NEG = 'negocioActivo';
-  const SESSION_KEY_USER = 'usuarioActivo';
+// js/auth.js — manejo de inicio de sesión
+console.log("🧩 auth.js cargado correctamente");
 
-  async function sha256(text){
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
-  }
-  function now(){ return Date.now(); }
+window.Auth = {
+  async login(correo, password) {
+    try {
+      if (!window.FB || !window.FB.db) {
+        throw new Error("Firebase no inicializado");
+      }
 
-  async function guardNegocio(){
-    const neg = JSON.parse(localStorage.getItem(SESSION_KEY_NEG)||'null');
-    if(!neg){ location.href='login.html'; }
-  }
-  async function guardRol(rol){
-    await guardNegocio();
-    const usr = JSON.parse(localStorage.getItem(SESSION_KEY_USER)||'null');
-    if(!usr){ location.href='acceso.html'; return; }
-    if(usr.rol !== rol){ location.href = usr.rol === 'administrador' ? 'dashboard.html' : 'ventas.html'; }
-  }
-  async function guardCaja(){
-    await guardNegocio();
-    const usr = JSON.parse(localStorage.getItem(SESSION_KEY_USER)||'null');
-    if(!usr){ location.href='acceso.html'; return; }
-  }
+      const { db, collection, query, where, getDocs } = window.FB;
 
-  async function loginNegocio(correo, pass){
-    const neg = await Storage.getNegocioByEmail(correo);
-    if(!neg) throw new Error('Negocio no encontrado');
-    const ph = await sha256(pass);
-    if((neg.passwordHash||'').toLowerCase()!==ph.toLowerCase()) throw new Error('Contraseña incorrecta');
-    localStorage.setItem(SESSION_KEY_NEG, JSON.stringify({ id: neg.id, nombre: neg.nombre, correo: neg.correo, ts: now() }));
-    return true;
-  }
-  async function logout(){
-    localStorage.removeItem(SESSION_KEY_NEG);
-    localStorage.removeItem(SESSION_KEY_USER);
-    location.href='login.html';
-  }
+      if (!correo || !password) throw new Error("Correo y contraseña requeridos");
 
-  async function loginInterno(usuario, pass){
-    const neg = JSON.parse(localStorage.getItem(SESSION_KEY_NEG)||'null');
-    if(!neg) throw new Error('Sin negocio activo');
-    const n = await Storage.getNegocioById(neg.id);
-    const ph = await sha256(pass);
-    const u = (n.usuarios||[]).find(x=> x.usuario===usuario && (x.passwordHash||'').toLowerCase()===ph.toLowerCase());
-    if(!u) throw new Error('Usuario o contraseña incorrectos');
-    localStorage.setItem(SESSION_KEY_USER, JSON.stringify({ usuario:u.usuario, rol:u.rol, negId:n.id, ts: now() }));
-    return u.rol;
-  }
-  async function logoutInterno(){
-    localStorage.removeItem(SESSION_KEY_USER);
-    location.href='acceso.html';
-  }
+      console.log("🔎 Buscando negocio con correo:", correo);
+      const q = query(collection(db, "negocios"), where("correo", "==", correo));
+      const snapshot = await getDocs(q);
 
-  return { guardNegocio, guardRol, guardCaja, loginNegocio, loginInterno, logout, logoutInterno };
-})();
+      if (snapshot.empty) throw new Error("No existe una cuenta con ese correo");
+
+      const negocio = snapshot.docs[0].data();
+      console.log("🧩 Negocio encontrado:", negocio.nombre);
+
+      // Comparar contraseña
+      if (negocio.passwordHash !== password) {
+        throw new Error("Contraseña incorrecta");
+      }
+
+      // Guardar sesión en localStorage
+      const session = {
+        id: snapshot.docs[0].id,
+        nombre: negocio.nombre,
+        correo: negocio.correo,
+        rol: "administrador",
+        timestamp: Date.now()
+      };
+      localStorage.setItem("sesion_negocio", JSON.stringify(session));
+      console.log("✅ Sesión iniciada correctamente");
+
+      return session;
+
+    } catch (err) {
+      console.error("❌ Error al iniciar sesión:", err);
+      throw err;
+    }
+  },
+
+  logout() {
+    localStorage.removeItem("sesion_negocio");
+    console.log("👋 Sesión cerrada");
+  },
+
+  getSesion() {
+    const data = localStorage.getItem("sesion_negocio");
+    return data ? JSON.parse(data) : null;
+  }
+};

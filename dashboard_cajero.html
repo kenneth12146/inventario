@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Cajero</title>
+  <link rel="stylesheet" href="./css/dashboard.css">
+</head>
+<body>
+  <header class="topbar">
+    <img src="./img/logo.png" class="logo" alt="logo">
+    <h1>Panel Cajero</h1>
+    <button id="logoutBtn" class="btn">Cerrar sesión</button>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Inventario Disponible</h2>
+      <table id="tablaProductos">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Venta</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card" id="ventaSec">
+      <h2>Registrar Venta</h2>
+      <form id="formVenta">
+        <input id="codigo" placeholder="Código producto" required>
+        <input id="cantidad" type="number" placeholder="Cantidad" required min="1">
+        <button class="btn" type="submit">Vender</button>
+      </form>
+      <p id="mensaje"></p>
+    </section>
+  </main>
+
+  <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, onSnapshot } 
+      from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
+      authDomain: "inventario-b4431.firebaseapp.com",
+      projectId: "inventario-b4431",
+      storageBucket: "inventario-b4431.firebasestorage.app",
+      messagingSenderId: "229641140897",
+      appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
+      measurementId: "G-RG2Y7DXCEC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const sesion = JSON.parse(localStorage.getItem("sesion_negocio") || "{}");
+    if (!sesion.id) {
+      alert("Debes iniciar sesión primero.");
+      location.href = "./login.html";
+    }
+
+    const tbody = document.querySelector("#tablaProductos tbody");
+    const refProductos = collection(db, `negocios/${sesion.id}/productos`);
+
+    // Mostrar inventario en tiempo real
+    onSnapshot(refProductos, (snap) => {
+      tbody.innerHTML = "";
+      snap.forEach(docu => {
+        const p = docu.data();
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${p.codigo}</td>
+          <td>${p.nombre}</td>
+          <td>${p.cantidad}</td>
+          <td>${p.precioVenta}</td>
+          <td><button class="btn seleccionar" data-id="${docu.id}" data-nombre="${p.nombre}" data-precio="${p.precioVenta}" data-stock="${p.cantidad}" data-codigo="${p.codigo}">🛒</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      document.querySelectorAll(".seleccionar").forEach(btn => {
+        btn.onclick = () => {
+          document.getElementById("codigo").value = btn.dataset.codigo;
+        };
+      });
+    });
+
+    // Registrar venta
+    document.getElementById("formVenta").onsubmit = async (e) => {
+      e.preventDefault();
+      const codigo = document.getElementById("codigo").value.trim();
+      const cantidad = parseInt(document.getElementById("cantidad").value);
+      const mensaje = document.getElementById("mensaje");
+
+      // Buscar producto
+      const snap = await getDoc(doc(db, `negocios/${sesion.id}`));
+      const negocio = snap.data();
+      const refProds = collection(db, `negocios/${sesion.id}/productos`);
+      let encontrado = null;
+      let idDoc = null;
+
+      const productosSnap = await getDoc(doc(db, `negocios/${sesion.id}`));
+      const refAll = await onSnapshot(refProductos, ()=>{});
+      // Simplificar la búsqueda
+      const querySnap = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"))
+      const snapProds = await getDoc(doc(db, `negocios/${sesion.id}`));
+
+      const prods = negocio.productos;
+      
+      // Para evitar error, usamos snapshot directo
+      const allSnap = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
+      
+      const docs = [];
+      const q = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
+
+      // Buscar producto en la colección
+      const list = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
+
+      const qSnap = await getDoc(doc(db, `negocios/${sesion.id}`));
+
+      mensaje.textContent = "Procesando venta...";
+      mensaje.style.color = "gray";
+
+      // Leer la colección de productos
+      const refProd = collection(db, `negocios/${sesion.id}/productos`);
+      const all = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
+      const snapshot = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
+      
+      // Recorrer productos
+      let productoEncontrado = null;
+      const snap2 = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
+      const proSnap = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
+      
+      // Obtener listado actual
+      const getDocs = (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js")).getDocs;
+      const querySnapshot = await getDocs(refProductos);
+      for (const docu of querySnapshot.docs) {
+        const p = docu.data();
+        if (p.codigo === codigo) {
+          productoEncontrado = { ...p, id: docu.id };
+          break;
+        }
+      }
+
+      if (!productoEncontrado) {
+        mensaje.textContent = "Producto no encontrado.";
+        mensaje.style.color = "red";
+        return;
+      }
+
+      if (productoEncontrado.cantidad < cantidad) {
+        mensaje.textContent = "Stock insuficiente.";
+        mensaje.style.color = "red";
+        return;
+      }
+
+      // Actualizar cantidad en inventario
+      const nuevaCantidad = productoEncontrado.cantidad - cantidad;
+      await updateDoc(doc(db, `negocios/${sesion.id}/productos/${productoEncontrado.id}`), {
+        cantidad: nuevaCantidad
+      });
+
+      // Registrar venta
+      const venta = {
+        codigo: productoEncontrado.codigo,
+        nombre: productoEncontrado.nombre,
+        cantidad,
+        precioUnitario: productoEncontrado.precioVenta,
+        total: cantidad * productoEncontrado.precioVenta,
+        fecha: new Date().toISOString()
+      };
+      await addDoc(collection(db, `negocios/${sesion.id}/ventas`), venta);
+
+      // Mostrar ticket imprimible
+      const ticket = window.open("", "_blank");
+      ticket.document.write(`
+        <h2>Inventario Maestro</h2>
+        <p>Producto: ${venta.nombre}</p>
+        <p>Cantidad: ${venta.cantidad}</p>
+        <p>Precio unitario: ${venta.precioUnitario}</p>
+        <p>Total: ${venta.total}</p>
+        <p>Fecha: ${new Date().toLocaleString()}</p>
+        <button onclick="window.print()">Imprimir</button>
+      `);
+
+      mensaje.textContent = "Venta registrada exitosamente.";
+      mensaje.style.color = "green";
+      e.target.reset();
+    };
+
+    logoutBtn.onclick = () => {
+      localStorage.removeItem("sesion_negocio");
+      localStorage.removeItem("rolActivo");
+      location.href = "./login.html";
+    };
+  </script>
+</body>
+</html>

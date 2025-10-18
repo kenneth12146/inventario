@@ -1,1 +1,105 @@
-#listaProductos,#listaUsuarios,#reporte{max-height:380px;overflow:auto}
+/* ====== Panel Dashboard ====== */
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background-color: #0b0c10;
+  color: #f2f2f2;
+  margin: 0;
+  padding: 0;
+}
+
+.topbar {
+  background-color: #1f2833;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 2px solid #45a29e;
+}
+
+.logo {
+  height: 40px;
+}
+
+.btn {
+  background-color: #45a29e;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background-color: #66fcf1;
+  color: #000;
+}
+
+.container {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.card {
+  background-color: #1f2833;
+  border: 1px solid #45a29e;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(69, 162, 158, 0.2);
+}
+
+h1, h2 {
+  color: #66fcf1;
+  margin-bottom: 15px;
+}
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+form input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #45a29e;
+  border-radius: 4px;
+  background: #0b0c10;
+  color: #fff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #0b0c10;
+}
+
+th, td {
+  padding: 8px;
+  border: 1px solid #45a29e;
+  text-align: left;
+}
+
+th {
+  background-color: #45a29e;
+  color: #000;
+}
+
+tr:nth-child(even) {
+  background-color: #1f2833;
+}
+
+tr:hover {
+  background-color: #45a29e33;
+}
+
+.foot {
+  text-align: center;
+  padding: 15px;
+  border-top: 1px solid #45a29e;
+  color: #888;
+  margin-top: 30px;
+}

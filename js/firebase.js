@@ -1,5 +1,3 @@
-// js/firebase.js (module)
-// Exposes window.FB with db + Firestore helpers using user's firebaseConfig
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
@@ -14,7 +12,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db  = getFirestore(app);
 
-// expose to non-module scripts
+// Exponer SDK al global para scripts no-módulo
 window.FB = { db, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, query, where };
