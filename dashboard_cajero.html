@@ -3,50 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel Cajero</title>
+  <title>Panel Cajero - Inventario Maestro</title>
   <link rel="stylesheet" href="./css/dashboard.css">
+  <style>
+    body { background: #101820; color: #e4e4e4; font-family: "Poppins", sans-serif; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #0d2538; }
+    .btn { background: #00b4d8; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; color: white; margin: 2px; }
+    .btn:hover { background: #0096c7; }
+    .card { background: #162d3f; border-radius: 10px; padding: 1rem; margin: 1rem auto; width: 95%; max-width: 1000px; box-shadow: 0 0 10px #0004; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #223b52; padding: 8px; text-align: center; }
+    th { background: #1f3a53; color: #00b4d8; }
+    tr:hover { background: #23384b; }
+    input, select { padding: 6px; border-radius: 6px; border: 1px solid #333; background: #14293d; color: white; }
+    #scanner { width: 300px; margin: auto; }
+  </style>
 </head>
 <body>
+
   <header class="topbar">
-    <img src="./img/logo.png" class="logo" alt="logo">
-    <h1>Panel Cajero</h1>
+    <div><img src="./img/logo.png" alt="logo" style="height:40px;vertical-align:middle"> <b>Panel Cajero</b></div>
     <button id="logoutBtn" class="btn">Cerrar sesión</button>
   </header>
 
-  <main class="container">
+  <main>
+    <!-- INVENTARIO -->
     <section class="card">
       <h2>Inventario Disponible</h2>
+      <input id="buscar" placeholder="Buscar producto por nombre o código" style="width:100%;margin-bottom:10px;">
+      <div id="scanner"></div>
+      <button id="btnScanner" class="btn" style="background:#007f5f;">📷 Escanear Código</button>
       <table id="tablaProductos">
         <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Cantidad</th>
-            <th>Venta</th>
-            <th>Acción</th>
-          </tr>
+          <tr><th>Código</th><th>Nombre</th><th>Cantidad</th><th>Precio</th><th></th></tr>
         </thead>
         <tbody></tbody>
       </table>
     </section>
 
-    <section class="card" id="ventaSec">
-      <h2>Registrar Venta</h2>
-      <form id="formVenta">
-        <input id="codigo" placeholder="Código producto" required>
-        <input id="cantidad" type="number" placeholder="Cantidad" required min="1">
-        <button class="btn" type="submit">Vender</button>
-      </form>
-      <p id="mensaje"></p>
+    <!-- CARRITO -->
+    <section class="card">
+      <h2>Carrito de Venta</h2>
+      <table id="carrito">
+        <thead>
+          <tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="resumen">
+        <div>
+          <label>Descuento:</label>
+          <input id="descuento" type="number" min="0" max="100" value="0" style="width:70px;"> %
+          <br>
+          <label>IVA:</label>
+          <input id="iva" type="number" min="0" max="19" value="19" style="width:70px;"> %
+        </div>
+        <h3>Total: <span id="total">$0</span></h3>
+      </div>
+      <button id="btnConfirmar" class="btn" style="margin-top:10px;">💾 Registrar Venta</button>
+      <button id="btnCancelar" class="btn" style="background:#e63946;">❌ Cancelar</button>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section class="card">
+      <h2>Historial de Ventas</h2>
+      <table id="tablaVentas">
+        <thead><tr><th>Fecha</th><th>Producto</th><th>Total</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </section>
   </main>
 
   <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
 
+  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, onSnapshot } 
-      from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
@@ -54,152 +87,175 @@
       projectId: "inventario-b4431",
       storageBucket: "inventario-b4431.firebasestorage.app",
       messagingSenderId: "229641140897",
-      appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
-      measurementId: "G-RG2Y7DXCEC"
+      appId: "1:229641140897:web:c1ac156045b0edbf110ee0"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const sesion = JSON.parse(localStorage.getItem("sesion_negocio") || "{}");
-    if (!sesion.id) {
-      alert("Debes iniciar sesión primero.");
-      location.href = "./login.html";
-    }
+
+    const formatoCOP = n => new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP"}).format(n||0);
+
+    const refProductos = collection(db, `negocios/${sesion.id}/productos`);
+    const refVentas = collection(db, `negocios/${sesion.id}/ventas`);
 
     const tbody = document.querySelector("#tablaProductos tbody");
-    const refProductos = collection(db, `negocios/${sesion.id}/productos`);
+    const tbodyCarrito = document.querySelector("#carrito tbody");
+    const tbodyVentas = document.querySelector("#tablaVentas tbody");
+    const inputBuscar = document.getElementById("buscar");
 
-    // Mostrar inventario en tiempo real
-    onSnapshot(refProductos, (snap) => {
-      tbody.innerHTML = "";
-      snap.forEach(docu => {
-        const p = docu.data();
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${p.codigo}</td>
-          <td>${p.nombre}</td>
-          <td>${p.cantidad}</td>
-          <td>${p.precioVenta}</td>
-          <td><button class="btn seleccionar" data-id="${docu.id}" data-nombre="${p.nombre}" data-precio="${p.precioVenta}" data-stock="${p.cantidad}" data-codigo="${p.codigo}">🛒</button></td>
-        `;
+    let carrito = [];
+    let productosCache = [];
+
+    // Mostrar productos en tiempo real
+    onSnapshot(refProductos, snap=>{
+      productosCache = [];
+      tbody.innerHTML="";
+      snap.forEach(docu=>{
+        const p=docu.data();
+        p.id = docu.id;
+        productosCache.push(p);
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${p.codigo}</td><td>${p.nombre}</td><td>${p.cantidad}</td><td>${formatoCOP(p.precioVenta)}</td>
+        <td><button class='btn agregar' data-id='${docu.id}'>➕</button></td>`;
         tbody.appendChild(tr);
       });
-      document.querySelectorAll(".seleccionar").forEach(btn => {
-        btn.onclick = () => {
-          document.getElementById("codigo").value = btn.dataset.codigo;
+      agregarEventos();
+    });
+
+    // Filtro de búsqueda
+    inputBuscar.addEventListener("input", ()=>{
+      const val = inputBuscar.value.toLowerCase().trim();
+      const filtrados = productosCache.filter(p=>p.nombre.toLowerCase().includes(val) || p.codigo.toLowerCase().includes(val));
+      tbody.innerHTML="";
+      filtrados.forEach(p=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${p.codigo}</td><td>${p.nombre}</td><td>${p.cantidad}</td><td>${formatoCOP(p.precioVenta)}</td>
+        <td><button class='btn agregar' data-id='${p.id}'>➕</button></td>`;
+        tbody.appendChild(tr);
+      });
+      agregarEventos();
+      // Si busca por código exacto, lo agrega automáticamente
+      const exact = productosCache.find(p=>p.codigo.toLowerCase()===val);
+      if (exact) agregarAlCarrito(exact);
+    });
+
+    // Escáner QR / Código de barras
+    document.getElementById("btnScanner").onclick = () => {
+      const scannerDiv = document.getElementById("scanner");
+      scannerDiv.innerHTML = "";
+      const html5QrCode = new Html5Qrcode("scanner");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (codigo) => {
+          const prod = productosCache.find(p => p.codigo.toString() === codigo.trim());
+          if (prod) {
+            agregarAlCarrito(prod);
+            html5QrCode.stop();
+            scannerDiv.innerHTML = "";
+            alert(`✅ Producto ${prod.nombre} agregado`);
+          } else {
+            alert("❌ Producto no encontrado");
+          }
+        },
+        (err) => {}
+      );
+    };
+
+    // Agregar producto
+    function agregarEventos(){
+      document.querySelectorAll(".agregar").forEach(btn=>{
+        btn.onclick=()=>{
+          const p = productosCache.find(x=>x.id===btn.dataset.id);
+          if(!p)return;
+          agregarAlCarrito(p);
         };
+      });
+    }
+
+    function agregarAlCarrito(p){
+      const cantidad=parseInt(prompt(`Cantidad de ${p.nombre}:`,1));
+      if(!cantidad||cantidad<=0)return;
+      if(cantidad>parseInt(p.cantidad))return alert("Stock insuficiente.");
+      carrito.push({id:p.id,nombre:p.nombre,precio:p.precioVenta,cantidad});
+      renderCarrito();
+    }
+
+    // Render carrito
+    function renderCarrito(){
+      tbodyCarrito.innerHTML="";
+      let total=0;
+      carrito.forEach((p,i)=>{
+        const subtotal=p.precio*p.cantidad;
+        total+=subtotal;
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${p.nombre}</td><td>${p.cantidad}</td><td>${formatoCOP(p.precio)}</td><td>${formatoCOP(subtotal)}</td>
+        <td><button class='btn borrar' data-index='${i}'>🗑</button></td>`;
+        tbodyCarrito.appendChild(tr);
+      });
+      document.querySelectorAll(".borrar").forEach(b=>b.onclick=()=>{carrito.splice(b.dataset.index,1);renderCarrito();});
+      calcularTotal(total);
+    }
+
+    function calcularTotal(base){
+      const desc=parseFloat(document.getElementById("descuento").value)||0;
+      const iva=parseFloat(document.getElementById("iva").value)||0;
+      let total=base - (base*desc/100);
+      total+=total*iva/100;
+      document.getElementById("total").textContent=formatoCOP(total);
+    }
+
+    document.getElementById("descuento").oninput=document.getElementById("iva").oninput=()=>renderCarrito();
+
+    // Confirmar venta
+    document.getElementById("btnConfirmar").onclick=async()=>{
+      if(carrito.length===0)return alert("No hay productos en el carrito.");
+      let subtotal=0;
+      carrito.forEach(p=>subtotal+=p.precio*p.cantidad);
+      const desc=parseFloat(document.getElementById("descuento").value)||0;
+      const iva=parseFloat(document.getElementById("iva").value)||0;
+      let total=subtotal - (subtotal*desc/100);
+      total+=total*iva/100;
+      const venta={
+        cajero: sesion.nombre || "Cajero",
+        productos: carrito,
+        subtotal,
+        descuento: desc,
+        iva,
+        totalFinal: total,
+        fecha: new Date().toISOString(),
+        estado: "activa"
+      };
+      await addDoc(refVentas, venta);
+      for(const p of carrito){
+        const refP=doc(db,`negocios/${sesion.id}/productos/${p.id}`);
+        const q=await getDocs(query(refProductos,where("nombre","==",p.nombre)));
+        q.forEach(async(d)=>{
+          const data=d.data();
+          await updateDoc(refP,{cantidad:data.cantidad-p.cantidad});
+        });
+      }
+      carrito=[];
+      renderCarrito();
+      alert("✅ Venta registrada correctamente");
+    };
+
+    // Cancelar venta
+    document.getElementById("btnCancelar").onclick=()=>{ if(confirm("¿Cancelar venta actual?")){carrito=[];renderCarrito();} };
+
+    // Historial
+    onSnapshot(refVentas, snap=>{
+      tbodyVentas.innerHTML="";
+      snap.forEach(v=>{
+        const d=v.data();
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${new Date(d.fecha).toLocaleString()}</td><td>${d.productos.map(p=>p.nombre).join(", ")}</td><td>${formatoCOP(d.totalFinal||d.total)}</td>`;
+        tbodyVentas.appendChild(tr);
       });
     });
 
-    // Registrar venta
-    document.getElementById("formVenta").onsubmit = async (e) => {
-      e.preventDefault();
-      const codigo = document.getElementById("codigo").value.trim();
-      const cantidad = parseInt(document.getElementById("cantidad").value);
-      const mensaje = document.getElementById("mensaje");
-
-      // Buscar producto
-      const snap = await getDoc(doc(db, `negocios/${sesion.id}`));
-      const negocio = snap.data();
-      const refProds = collection(db, `negocios/${sesion.id}/productos`);
-      let encontrado = null;
-      let idDoc = null;
-
-      const productosSnap = await getDoc(doc(db, `negocios/${sesion.id}`));
-      const refAll = await onSnapshot(refProductos, ()=>{});
-      // Simplificar la búsqueda
-      const querySnap = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"))
-      const snapProds = await getDoc(doc(db, `negocios/${sesion.id}`));
-
-      const prods = negocio.productos;
-      
-      // Para evitar error, usamos snapshot directo
-      const allSnap = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
-      
-      const docs = [];
-      const q = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
-
-      // Buscar producto en la colección
-      const list = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
-
-      const qSnap = await getDoc(doc(db, `negocios/${sesion.id}`));
-
-      mensaje.textContent = "Procesando venta...";
-      mensaje.style.color = "gray";
-
-      // Leer la colección de productos
-      const refProd = collection(db, `negocios/${sesion.id}/productos`);
-      const all = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
-      const snapshot = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
-      
-      // Recorrer productos
-      let productoEncontrado = null;
-      const snap2 = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
-      const proSnap = await (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"));
-      
-      // Obtener listado actual
-      const getDocs = (await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js")).getDocs;
-      const querySnapshot = await getDocs(refProductos);
-      for (const docu of querySnapshot.docs) {
-        const p = docu.data();
-        if (p.codigo === codigo) {
-          productoEncontrado = { ...p, id: docu.id };
-          break;
-        }
-      }
-
-      if (!productoEncontrado) {
-        mensaje.textContent = "Producto no encontrado.";
-        mensaje.style.color = "red";
-        return;
-      }
-
-      if (productoEncontrado.cantidad < cantidad) {
-        mensaje.textContent = "Stock insuficiente.";
-        mensaje.style.color = "red";
-        return;
-      }
-
-      // Actualizar cantidad en inventario
-      const nuevaCantidad = productoEncontrado.cantidad - cantidad;
-      await updateDoc(doc(db, `negocios/${sesion.id}/productos/${productoEncontrado.id}`), {
-        cantidad: nuevaCantidad
-      });
-
-      // Registrar venta
-      const venta = {
-        codigo: productoEncontrado.codigo,
-        nombre: productoEncontrado.nombre,
-        cantidad,
-        precioUnitario: productoEncontrado.precioVenta,
-        total: cantidad * productoEncontrado.precioVenta,
-        fecha: new Date().toISOString()
-      };
-      await addDoc(collection(db, `negocios/${sesion.id}/ventas`), venta);
-
-      // Mostrar ticket imprimible
-      const ticket = window.open("", "_blank");
-      ticket.document.write(`
-        <h2>Inventario Maestro</h2>
-        <p>Producto: ${venta.nombre}</p>
-        <p>Cantidad: ${venta.cantidad}</p>
-        <p>Precio unitario: ${venta.precioUnitario}</p>
-        <p>Total: ${venta.total}</p>
-        <p>Fecha: ${new Date().toLocaleString()}</p>
-        <button onclick="window.print()">Imprimir</button>
-      `);
-
-      mensaje.textContent = "Venta registrada exitosamente.";
-      mensaje.style.color = "green";
-      e.target.reset();
-    };
-
-    logoutBtn.onclick = () => {
-      localStorage.removeItem("sesion_negocio");
-      localStorage.removeItem("rolActivo");
-      location.href = "./login.html";
-    };
+    document.getElementById("logoutBtn").onclick=()=>{localStorage.clear();location.href="./login.html";};
   </script>
 </body>
 </html>
