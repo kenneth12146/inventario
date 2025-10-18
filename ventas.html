@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Punto de Venta</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="topbar"><img src="img/logo.png" class="logo"><h1>Ventas</h1>
+    <nav><a class="link" href="dashboard.html">Panel Admin</a><a class="link" href="#" onclick="Auth.logoutInterno();">Salir</a></nav>
+  </header>
+  <main class="container">
+    <section class="card">
+      <h2>Escanear / Ingresar producto</h2>
+      <video id="video" class="scanner" autoplay playsinline></video>
+      <div class="row">
+        <input id="codigo" placeholder="Escanea o escribe el código" autofocus>
+        <button class="btn" onclick="Ventas.agregarPorCodigo();">Agregar</button>
+        <button class="btn light" onclick="Ventas.buscar();">Buscar</button>
+        <button class="btn icon" onclick="Ventas.toggleCamara();">📷 Usar cámara</button>
+      </div>
+      <div id="sugerencias"></div>
+    </section>
+    <section class="grid-2">
+      <div class="card"><h2>Carrito</h2><div id="carrito"></div></div>
+      <div class="card">
+        <h2>Pago</h2>
+        <label>Forma de pago</label><select id="formaPago"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option></select>
+        <label>Recibido</label><input id="recibido" type="number" min="0" step="0.01" value="0">
+        <div id="total"></div>
+        <button class="btn" onclick="Ventas.confirmarVenta();">Confirmar venta</button>
+        <button class="btn warn" onclick="Ventas.vaciarCarrito();">Vaciar</button>
+      </div>
+    </section>
+    <section class="card"><h2>Ticket</h2><div id="ticket"></div><button class="btn light" onclick="window.print();">Imprimir</button></section>
+  </main>
+  <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
+  <script src="js/ui.js"></script>
+  <script type="module" src="js/firebase.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ventas.js"></script>
+  <script>
+    Auth.guardCaja();
+    Ventas.initPOS();
+  </script>
+</body></html>

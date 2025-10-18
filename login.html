@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login de Negocio</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="topbar"><img src="img/logo.png" class="logo"><h1>Acceso al Negocio</h1>
+    <nav><a class="link" href="index.html">Inicio</a><a class="link" href="registro.html">Crear cuenta</a></nav>
+  </header>
+  <main class="container narrow">
+    <form id="loginNegocioForm" class="card">
+      <h2>Cuenta del negocio</h2>
+      <label>Correo</label><input type="email" id="correo" required placeholder="correo@negocio.com">
+      <label>Contraseña</label><input type="password" id="password" required placeholder="••••••••">
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+  </main>
+  <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
+  <script src="js/ui.js"></script>
+  <script type="module" src="js/firebase.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    UI.requireOnlineBanner();
+    document.getElementById('loginNegocioForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const correo = document.getElementById('correo').value.trim();
+        const pass = document.getElementById('password').value;
+        await Auth.loginNegocio(correo, pass);
+        location.href = 'acceso.html';
+      } catch(err) { UI.toast(err.message || 'No fue posible iniciar sesión'); }
+    });
+  </script>
+</body></html>

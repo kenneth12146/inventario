@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel Administrador</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="topbar"><img src="img/logo.png" class="logo"><h1>Panel del Administrador</h1>
+    <nav><a class="link" href="ventas.html">Ir a Ventas</a><a class="link" href="#" onclick="Auth.logoutInterno();">Salir</a></nav>
+  </header>
+  <main class="container">
+    <section class="grid-2">
+      <div class="card">
+        <h2>Productos</h2>
+        <div class="row">
+          <input id="filtroProducto" placeholder="Buscar por código o nombre">
+          <button class="btn" onclick="Productos.renderLista();">Buscar</button>
+          <button class="btn" onclick="Productos.formNuevo();">Nuevo</button>
+          <button class="btn warn" onclick="Productos.exportarCSV();">Exportar CSV</button>
+          <button class="btn light" onclick="Productos.importarCSV();">Importar CSV</button>
+        </div>
+        <div id="listaProductos"></div>
+      </div>
+      <div class="card">
+        <h2>Usuarios internos</h2>
+        <div class="row"><button class="btn" onclick="Usuarios.formNuevo();">Nuevo usuario</button></div>
+        <div id="listaUsuarios"></div>
+      </div>
+    </section>
+    <section class="grid-2">
+      <div class="card">
+        <h2>Caja</h2><div id="estadoCaja"></div>
+        <div class="row"><button class="btn" onclick="Ventas.uiAperturaCaja();">Abrir caja</button><button class="btn warn" onclick="Ventas.uiCierreCaja();">Cerrar caja</button></div>
+      </div>
+      <div class="card">
+        <h2>Datos (backup)</h2>
+        <div class="row"><button class="btn" onclick="DataIO.exportarJSON();">Exportar base</button><button class="btn light" onclick="DataIO.importarJSON();">Importar base</button></div>
+        <div id="reporte"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
+  <script src="js/ui.js"></script>
+  <script type="module" src="js/firebase.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/productos.js"></script>
+  <script src="js/usuarios.js"></script>
+  <script src="js/ventas.js"></script>
+  <script src="js/dataio.js"></script>
+  <script>
+    Auth.guardRol('administrador');
+    Productos.init();
+    Usuarios.init();
+    Ventas.init();
+  </script>
+</body></html>
