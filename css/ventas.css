@@ -1,2 +1,0 @@
-#carrito table{margin-bottom:12px}#ticket{background:#0b0e11;border:1px dashed #2a2f38;padding:12px;border-radius:10px}
-@media print{.topbar,nav,.btn,.foot,.container>.card:first-child{display:none}#ticket{border:none}body{background:#fff;color:#000}}

@@ -1,376 +1,887 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Panel Administrador - Inventario Maestro</title>
-  <link rel="stylesheet" href="./css/dashboard.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Administrador - Sistema POS Profesional</title>
+  <link rel="shortcut icon" href="img/logo.png" />
+
+  <!-- Librería para gráficas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- Librería para exportar Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  
+  <!-- Librería para exportar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <!-- Estilos CSS del Panel Admin -->
+  <link rel="stylesheet" href="./css/dashboard_admin.css">
+  
   <style>
-    body { background: #101820; color: #e4e4e4; font-family: "Poppins", sans-serif; }
-    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #0d2538; }
-    .btn { background: #00b4d8; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: white; margin: 2px; }
-    .btn:hover { background: #0096c7; }
-    .card { background: #162d3f; border-radius: 10px; padding: 1rem; margin: 1rem auto; width: 95%; max-width: 1000px; box-shadow: 0 0 10px #0004; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #223b52; padding: 8px; text-align: center; }
-    th { background: #1f3a53; color: #00b4d8; }
-    tr:hover { background: #23384b; }
-    input, select { padding: 6px; border-radius: 6px; border: 1px solid #333; background: #14293d; color: white; }
+    /* Estilos específicos para el logo en topbar */
+    .topbar-logo-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 8px 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .topbar-logo-container:hover {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      transform: translateY(-2px);
+    }
+    
+    #logoNegocioTopbar {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      display: none;
+      transition: all 0.3s ease;
+    }
+    
+    #logoNegocioTopbar:hover {
+      transform: scale(1.05);
+      border-color: #fff;
+    }
+    
+    .topbar-logo-placeholder {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .topbar-negocio-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    #nombreNegocio {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      letter-spacing: 0.5px;
+    }
+    
+    .topbar-negocio-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <img src="./img/logo.png" class="logo" alt="logo" />
-    <h1>Panel Administrador</h1>
-    <button id="logoutBtn" class="btn">Cerrar sesión</button>
-  </header>
+  
+  <!-- ========== BARRA LATERAL ========== -->
+  <aside class="sidebar">
+    <!-- Encabezado con información del usuario -->
+    <div class="sidebar-header">
+      <div class="user-info">
+        <img src="inventario-main/img/logo.png" alt="">
+        <div>
+          <div style="font-weight: 600; font-size: 16px;" id="nombreUsuario">Administrador</div>
+          <div style="font-size: 12px; opacity: 0.8;">Panel de Control</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Menú de navegación -->
+    <ul class="sidebar-menu">
+      <li><a href="#" class="active" data-section="dashboard">📊 Dashboard</a></li>
+      <li><a href="#" data-section="productos">📦 Productos</a></li>
+      <li><a href="#" data-section="categorias">🏷️ Categorías</a></li>
+      <li><a href="#" data-section="ventas">💰 Ventas</a></li>
+      <li><a href="#" data-section="devoluciones">🔄 Devoluciones</a></li>
+      <li><a href="#" data-section="clientes">👥 Clientes</a></li>
+      <li><a href="#" data-section="reportes">📈 Reportes</a></li>
+      <li><a href="#" data-section="alertas">🔔 Alertas</a></li>
+      <li><a href="#" data-section="usuarios">👥 Usuarios</a></li>
+      <li><a href="#" data-section="configuracion">⚙️ Configuración</a></li>
+      <li><a href="#" id="btnCerrarSesion">🚪 Cerrar Sesión</a></li>
+    </ul>
+  </aside>
 
-  <main class="container">
 
-    <!-- INVENTARIO -->
-    <section class="card">
-      <h2>Inventario</h2>
+  <!-- ========== CONTENIDO PRINCIPAL ========== -->
+  <div class="main-content">
+    
+    <!-- ========== BARRA SUPERIOR CON LOGO MEJORADO ========== -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <span>Panel de Control</span> / <span id="currentSection">Dashboard</span>
+      </div>
+      
+      <!-- ✨ LOGO DEL NEGOCIO - MEJORADO ✨ -->
+      <div class="topbar-logo-container">
+        <img id="logoNegocioTopbar" src="" alt="Logo del Negocio">
+        <div class="topbar-logo-placeholder" id="logoPlaceholderTopbar">🏪</div>
+        <div class="topbar-negocio-info">
+          <span class="topbar-negocio-label">Mi Negocio</span>
+          <strong id="nombreNegocio">Cargando...</strong>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Mensajes de éxito y error -->
+    <div id="successMsg" class="message success"></div>
+    <div id="errorMsg" class="message error"></div>
+
+
+    <!-- ========== SECCIÓN: DASHBOARD ========== -->
+    <div class="section-content active" id="section-dashboard">
+      
+      <!-- Tarjetas de estadísticas principales -->
+      <div class="stats-grid">
+
+        <!-- Ventas del día (NUEVA) -->
+<div class="stat-card blue">
+  <div class="icon">📅</div>
+  <h4>Ventas del Día</h4>
+  <div class="value" id="statVentasHoy">$0</div>
+  <div class="trend">Hoy</div>
+</div>
+
+        <!-- Ventas del mes -->
+        <div class="stat-card green">
+          <div class="icon">💰</div>
+          <h4>Ventas del Mes</h4>
+          <div class="value" id="statVentasMes">$0</div>
+          <div class="trend">↑ +15% vs mes anterior</div>
+        </div>
+        
+        <!-- Productos en stock -->
+        <div class="stat-card">
+          <div class="icon">📦</div>
+          <h4>Productos en Stock</h4>
+          <div class="value" id="statProductos">0</div>
+          <div class="trend">Total de productos</div>
+        </div>
+        
+        <!-- Stock bajo -->
+        <div class="stat-card orange">
+          <div class="icon">⚠️</div>
+          <h4>Stock Bajo</h4>
+          <div class="value" id="statStockBajo">0</div>
+          <div class="trend">Requieren atención</div>
+        </div>
+        
+        <!-- Clientes activos -->
+        <div class="stat-card purple">
+          <div class="icon">👥</div>
+          <h4>Clientes Activos</h4>
+          <div class="value" id="statClientes">0</div>
+          <div class="trend">Este mes</div>
+        </div>
+      </div>
+
+
+      <!-- Alerta de productos con stock bajo -->
+      <div id="alertasStockBajo" style="display: none;">
+        <div class="alert-box">
+          <h4 style="margin-bottom: 15px;">⚠️ Productos con Stock Bajo</h4>
+          <div id="alertasLista"></div>
+        </div>
+      </div>
+
+
+      <!-- Gráficas superiores -->
+      <div class="charts-grid">
+        <!-- Gráfica de ventas últimos 7 días -->
+        <div class="chart-container">
+          <h4 style="margin-bottom: 15px;">📈 Ventas de los Últimos 7 Días</h4>
+          <canvas id="chartVentas"></canvas>
+        </div>
+        
+        <!-- Gráfica de productos más vendidos -->
+        <div class="chart-container">
+          <h4 style="margin-bottom: 15px;">🏆 Top 5 Productos Más Vendidos</h4>
+          <canvas id="chartTopProductos"></canvas>
+        </div>
+      </div>
+
+
+      <!-- Gráficas inferiores -->
+      <div class="charts-grid">
+        <!-- Gráfica de métodos de pago -->
+        <div class="chart-container">
+          <h4 style="margin-bottom: 15px;">💳 Métodos de Pago</h4>
+          <canvas id="chartMetodosPago"></canvas>
+        </div>
+        
+        <!-- Gráfica de ventas por categoría -->
+        <div class="chart-container">
+          <h4 style="margin-bottom: 15px;">📊 Ventas por Categoría</h4>
+          <canvas id="chartCategorias"></canvas>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ========== SECCIÓN: PRODUCTOS ========== -->
+    <div class="section-content" id="section-productos">
+      <div class="card">
+        <h3>📦 Gestión de Productos</h3>
+        
+        <!-- Botones de acción -->
+        <div class="action-buttons">
+          <button class="btn btn-success" onclick="abrirModalProducto()">
+            ➕ Nuevo Producto
+          </button>
+          <button class="btn btn-primary" onclick="exportarProductosExcel()">
+            📊 Exportar Excel
+          </button>
+          <button class="btn btn-danger" onclick="exportarProductosPDF()">
+            📄 Exportar PDF
+          </button>
+        </div>
+
+
+        <!-- Barra de búsqueda -->
+        <div class="search-bar">
+          <input type="text" id="buscarProducto" placeholder="Buscar productos por nombre o código...">
+        </div>
+
+
+        <!-- Tabla de productos -->
+        <table id="tablaProductos">
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Precio Compra</th>
+              <th>Precio Venta</th>
+              <th>Stock</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Los productos se cargan dinámicamente aquí -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ========== SECCIÓN: CATEGORÍAS ========== -->
+    <div class="section-content" id="section-categorias">
+      <div class="card">
+        <h3>🏷️ Gestión de Categorías</h3>
+        
+        <!-- Botón para agregar categoría -->
+        <div class="action-buttons">
+          <button class="btn btn-success" onclick="abrirModalCategoria()">
+            ➕ Nueva Categoría
+          </button>
+        </div>
+
+
+        <!-- Grid de categorías -->
+        <div id="categoriasGrid" class="categorias-grid-custom"></div>
+      </div>
+    </div>
+
+
+    <!-- ========== SECCIÓN: VENTAS ========== -->
+    <div class="section-content" id="section-ventas">
+      <div class="card">
+        <h3>💰 Historial de Ventas</h3>
+        
+        <!-- Botones de exportación -->
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="exportarVentasExcel()">
+            📊 Exportar Excel
+          </button>
+          <button class="btn btn-danger" onclick="exportarVentasPDF()">
+            📄 Exportar PDF
+          </button>
+        </div>
+
+
+        <!-- Barra de búsqueda -->
+        <div class="search-bar">
+          <input type="text" id="buscarVenta" placeholder="Buscar ventas...">
+        </div>
+
+
+        <!-- Tabla de ventas -->
+        <table id="tablaVentas">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Método</th>
+              <th>Usuario</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Las ventas se cargan dinámicamente aquí -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ========== SECCIÓN: DEVOLUCIONES (NUEVA) ========== -->
+    <div class="section-content" id="section-devoluciones">
+      <div class="card">
+        <h3>🔄 Historial de Devoluciones</h3>
+        
+        <!-- Tabla de devoluciones -->
+        <table id="tablaDevoluciones">
+          <thead>
+            <tr>
+              <th>ID Venta</th>
+              <th>Fecha Devolución</th>
+              <th>Cliente</th>
+              <th>Productos</th>
+              <th>Monto</th>
+              <th>Motivo</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Las devoluciones se cargan dinámicamente aquí -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ========== SECCIÓN: REPORTES ========== -->
+    <div class="section-content" id="section-reportes">
+      <div class="card">
+        <h3>📈 Reportes Avanzados</h3>
+        
+        <!-- Filtros de reporte -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tipo de Reporte:</label>
+            <select id="tipoReporte">
+              <option value="ventas">Ventas por Período</option>
+              <option value="productos">Productos Más Vendidos</option>
+              <option value="rentabilidad">Rentabilidad</option>
+              <option value="cajeros">Desempeño de Cajeros</option>
+              <option value="inventario">Estado de Inventario</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Fecha Inicio:</label>
+            <input type="date" id="fechaInicio">
+          </div>
+          
+          <div class="form-group">
+            <label>Fecha Fin:</label>
+            <input type="date" id="fechaFin">
+          </div>
+        </div>
+
+
+        <!-- Botones de acción de reportes -->
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="generarReporte()">
+            📊 Generar Reporte
+          </button>
+          <button class="btn btn-success" onclick="exportarReporteExcel()">
+            📥 Descargar Excel
+          </button>
+          <button class="btn btn-danger" onclick="exportarReportePDF()">
+            📥 Descargar PDF
+          </button>
+        </div>
+
+
+        <!-- Contenedor de resultados -->
+        <div id="resultadoReporte" style="margin-top: 30px;"></div>
+      </div>
+    </div>
+
+
+    <!-- ========== SECCIÓN: ALERTAS ========== -->
+    <div class="section-content" id="section-alertas">
+      <div class="card">
+        <h3>🔔 Sistema de Alertas</h3>
+        
+        <!-- Alerta de stock crítico -->
+        <div class="alert-box">
+          <h4>Productos con Stock Crítico (≤ 5 unidades)</h4>
+          <div id="alertasStockCritico"></div>
+        </div>
+
+
+        <!-- Productos sin movimiento -->
+        <div class="card" style="margin-top: 20px;">
+          <h4>📊 Productos Sin Movimiento (últimos 30 días)</h4>
+          <div id="productosSinMovimiento"></div>
+        </div>
+
+
+        <!-- Productos más rentables -->
+        <div class="card" style="margin-top: 20px;">
+          <h4>💰 Productos Más Rentables</h4>
+          <div id="productosRentables"></div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <!-- ========== SECCIÓN: CLIENTES ========== -->
+    <div class="section-content" id="section-clientes">
+      <div class="card">
+        <h3>👥 Gestión de Clientes</h3>
+
+        <!-- Botones de acción -->
+        <div class="action-buttons">
+          <button class="btn btn-success" onclick="abrirModalCliente()">➕ Nuevo Cliente</button>
+          <button class="btn btn-primary" onclick="exportarClientesExcel()">📥 Exportar Excel</button>
+        </div>
+
+        <!-- Estadísticas de clientes -->
+        <div class="stats-grid" style="margin: 20px 0;">
+          <div class="stat-card blue">
+            <div class="icon">👥</div>
+            <h4>Total Clientes</h4>
+            <div class="value" id="statTotalClientes">0</div>
+          </div>
+          <div class="stat-card green">
+            <div class="icon">🛒</div>
+            <h4>Clientes Activos</h4>
+            <div class="value" id="statClientesActivos">0</div>
+            <div class="trend">Este mes</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="icon">⭐</div>
+            <h4>Cliente Top</h4>
+            <div class="value" style="font-size: 16px" id="statClienteTop">-</div>
+          </div>
+        </div>
+
+        <!-- Barra de búsqueda -->
+        <div class="search-bar">
+          <input type="text" id="buscarCliente" placeholder="🔍 Buscar clientes por nombre o teléfono...">
+        </div>
+
+        <!-- Tabla de clientes -->
+        <table id="tablaClientes">
+          <thead>
+            <tr>
+              <th>Cédula</th>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Email</th>
+              <th>Total Compras</th>
+              <th>Total Gastado</th>
+              <th>Última Compra</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Los clientes se cargan dinámicamente aquí -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ========== SECCIÓN: USUARIOS ========== -->
+    <div class="section-content" id="section-usuarios">
+      <div class="card">
+        <h3>👥 Gestión de Usuarios</h3>
+        
+        <!-- Botón para agregar usuario -->
+        <div class="action-buttons">
+          <button class="btn btn-success" onclick="abrirModalUsuario()">
+            ➕ Nuevo Usuario
+          </button>
+        </div>
+
+
+        <!-- Tabla de usuarios -->
+        <table id="tablaUsuarios">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Los usuarios se cargan dinámicamente aquí -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <!-- ========== SECCIÓN: CONFIGURACIÓN ========== -->
+    <div class="section-content" id="section-configuracion">
+      <div class="card">
+        <h3>⚙️ Configuración del Negocio</h3>
+        
+        <!-- Formulario de configuración -->
+        <form id="formConfiguracion">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nombre del Negocio:</label>
+              <input type="text" id="configNombre" required>
+            </div>
+            
+            <div class="form-group">
+              <label>NIT/RUC:</label>
+              <input type="text" id="configNit">
+            </div>
+            
+            <div class="form-group">
+              <label>Teléfono:</label>
+              <input type="tel" id="configTelefono">
+            </div>
+            
+            <div class="form-group">
+              <label>Email:</label>
+              <input type="email" id="configEmail">
+            </div>
+            
+            <div class="form-group">
+              <label>Dirección:</label>
+              <input type="text" id="configDireccion">
+            </div>
+            
+            <div class="form-group">
+              <label>Ciudad:</label>
+              <input type="text" id="configCiudad">
+            </div>
+          </div>
+
+
+          <!-- Sección de logo -->
+          <div class="form-group">
+            <label>Logo del Negocio:</label>
+            <div class="img-upload-container">
+              <div class="img-preview-box">
+                <img id="logoPreview" class="img-preview" src="" alt="Logo" style="display: none;">
+                <span id="logoPlaceholder">📷 Sin logo</span>
+              </div>
+              <div>
+                <input type="file" id="logoInput" accept="image/*" style="display: none;">
+                <button type="button" class="btn btn-primary" onclick="document.getElementById('logoInput').click()">
+                  📁 Seleccionar Logo
+                </button>
+                <p style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">Tamaño recomendado: 200x200px</p>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Botón guardar configuración -->
+          <button type="submit" class="btn btn-success">
+            💾 Guardar Configuración
+          </button>
+        </form>
+
+
+        <!-- Separador -->
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #ecf0f1;">
+
+
+        <!-- Herramientas avanzadas -->
+        <h4 style="margin-bottom: 20px;">🔧 Herramientas Avanzadas</h4>
+        
+        <div class="action-buttons">
+          <button class="btn btn-warning" onclick="exportarBackup()">
+            💾 Backup Completo
+          </button>
+          <button class="btn btn-primary" onclick="importarBackup()">
+            📥 Restaurar Backup
+          </button>
+          <button class="btn btn-danger" onclick="limpiarDatos()">
+            🗑️ Limpiar Datos de Prueba
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========== MODALES ========== -->
+  
+  <!-- Modal: Agregar/Editar Producto -->
+  <div id="modalProducto" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="tituloModalProducto">Nuevo Producto</h3>
+        <button class="close-modal" onclick="cerrarModal('modalProducto')">&times;</button>
+      </div>
+      
       <form id="formProducto">
-        <input id="codigo" placeholder="Código" required />
-        <input id="nombre" placeholder="Nombre" required />
-        <input id="cantidad" type="number" placeholder="Cantidad" min="1" required />
-        <input id="precioCompra" type="number" placeholder="Compra" min="1" required />
-        <input id="precioVenta" type="number" placeholder="Venta" min="1" required />
-        <button class="btn" type="submit">Guardar</button>
+        <input type="hidden" id="productoId">
+        
+        <!-- Imagen del producto -->
+        <div class="form-group">
+          <label>Imagen del Producto:</label>
+          <div class="img-upload-container">
+            <div class="img-preview-box">
+              <img id="productoImgPreview" class="img-preview" src="" alt="Producto" style="display: none;">
+              <span id="productoImgPlaceholder">📷 Sin imagen</span>
+            </div>
+            <div>
+              <input type="file" id="productoImgInput" accept="image/*" style="display: none;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('productoImgInput').click()">
+                📁 Seleccionar Imagen
+              </button>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Campos del producto -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Código:</label>
+            <input type="text" id="productoCodigo" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Nombre:</label>
+            <input type="text" id="productoNombre" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Categoría:</label>
+            <select id="productoCategoria" required></select>
+          </div>
+          
+          <div class="form-group">
+            <label>Precio de Compra:</label>
+            <input type="number" id="productoPrecioCompra" step="0.01" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Precio de Venta:</label>
+            <input type="number" id="productoPrecioVenta" step="0.01" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Cantidad en Stock:</label>
+            <input type="number" id="productoCantidad" required>
+          </div>
+        </div>
+
+
+        <!-- Botones del formulario -->
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+          <button type="button" class="btn btn-light" onclick="cerrarModal('modalProducto')">Cancelar</button>
+          <button type="submit" class="btn btn-success" style="flex: 1;">💾 Guardar</button>
+        </div>
       </form>
+    </div>
+  </div>
 
-      <div style="margin-top:10px;">
-        <button id="exportInventario" class="btn">📦 Exportar Inventario</button>
-        <input type="file" id="importFile" accept=".csv" style="display:none;">
-        <button id="importInventario" class="btn" style="background:#007f5f;">📤 Importar Inventario</button>
+
+  <!-- Modal: Agregar Categoría -->
+  <div id="modalCategoria" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nueva Categoría</h3>
+        <button class="close-modal" onclick="cerrarModal('modalCategoria')">&times;</button>
       </div>
+      
+      <form id="formCategoria">
+        <div class="form-group">
+          <label>Nombre de la Categoría:</label>
+          <input type="text" id="categoriaNombre" required placeholder="Ej: Bebidas, Snacks, etc.">
+        </div>
 
-      <table id="tablaProductos">
-        <thead>
-          <tr>
-            <th>Código</th><th>Nombre</th><th>Cant.</th>
-            <th>Compra</th><th>Venta</th><th>Ganancia</th><th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
 
-    <!-- USUARIOS -->
-    <section class="card">
-      <h2>Usuarios</h2>
+        <!-- Botones del formulario -->
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+          <button type="button" class="btn btn-light" onclick="cerrarModal('modalCategoria')">Cancelar</button>
+          <button type="submit" class="btn btn-success" style="flex: 1;">💾 Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Modal: Agregar/Editar Usuario -->
+  <div id="modalUsuario" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Nuevo Usuario</h3>
+        <button class="close-modal" onclick="cerrarModal('modalUsuario')">&times;</button>
+      </div>
+      
       <form id="formUsuario">
-        <input id="usuario" placeholder="Usuario" required />
-        <input id="clave" type="password" placeholder="Contraseña" required />
-        <select id="rol">
-          <option value="cajero">Cajero</option>
-          <option value="inventarista">Inventarista</option>
-          <option value="administrador">Administrador</option>
-        </select>
-        <button class="btn" type="submit">Crear Usuario</button>
+        <input type="hidden" id="usuarioId">
+        
+        <div class="form-group">
+          <label>Nombre Completo:</label>
+          <input type="text" id="usuarioNombre" required placeholder="Juan Pérez">
+        </div>
+        
+        <div class="form-group">
+          <label>Email:</label>
+          <input type="email" id="usuarioEmail" required placeholder="usuario@ejemplo.com">
+        </div>
+        
+        <!-- Campo de contraseña -->
+        <div class="form-group">
+          <label>Contraseña:</label>
+          <input type="password" id="usuarioPassword" required placeholder="Mínimo 6 caracteres" minlength="6">
+          <p style="font-size: 11px; color: #7f8c8d; margin-top: 5px;">
+            La contraseña debe tener al menos 6 caracteres
+          </p>
+        </div>
+        
+        <div class="form-group">
+          <label>Rol:</label>
+          <select id="usuarioRol" required>
+            <option value="cajero">Cajero</option>
+            <option value="vendedor">Vendedor</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+
+
+        <!-- Botones del formulario -->
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+          <button type="button" class="btn btn-light" onclick="cerrarModal('modalUsuario')">Cancelar</button>
+          <button type="submit" class="btn btn-success" style="flex: 1;">💾 Crear Usuario</button>
+        </div>
       </form>
+    </div>
+  </div>
 
-      <table id="tablaUsuarios">
-        <thead>
-          <tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
 
-    <!-- VENTAS -->
-    <section class="card">
-      <h2>Ventas Registradas</h2>
-      <div style="margin-bottom:10px;">
-        <button id="exportVentas" class="btn">📥 Exportar Ventas</button>
+  <!-- Modal: Detalle de Venta -->
+  <div id="modalDetalleVenta" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Detalle de Venta</h3>
+        <button class="close-modal" onclick="cerrarModal('modalDetalleVenta')">&times;</button>
       </div>
-      <table id="tablaVentas">
+      
+      <!-- El contenido se carga dinámicamente -->
+      <div id="detalleVentaContenido"></div>
+    </div>
+  </div>
+
+
+  <!-- ========== SCRIPTS ========== -->
+  <script type="module" src="./js/firebase.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/auth.js"></script>
+  <script src="./js/negocio.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/dashboard_admin.js"></script>
+
+  <!-- Modal Agregar/Editar Cliente -->
+  <div id="modalCliente" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="tituloModalCliente">Nuevo Cliente</h3>
+        <button class="close-modal" onclick="cerrarModal('modalCliente')">&times;</button>
+      </div>
+      <form id="formCliente">
+        <input type="hidden" id="clienteId">
+
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input type="text" id="clienteNombreModal" required placeholder="Juan Pérez">
+        </div>
+
+        <div class="form-group">
+          <label>Cédula / ID *</label>
+          <input type="text" id="clienteCedulaModal" required placeholder="1234567890">
+        </div>
+
+        <div class="form-group">
+          <label>Teléfono *</label>
+          <input type="tel" id="clienteTelefonoModal" placeholder ="+57 300 123 4567">
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="clienteEmailModal" placeholder="cliente@ejemplo.com">
+        </div>
+
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" id="clienteDireccionModal" placeholder="Calle 123 #45-67">
+        </div>
+
+        <div class="form-group">
+          <label>Notas</label>
+          <textarea id="clienteNotasModal" rows="3" placeholder="Información adicional del cliente..."></textarea>
+        </div>
+
+        <!-- Botones -->
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+          <button type="button" class="btn btn-light" onclick="cerrarModal('modalCliente')">Cancelar</button>
+          <button type="button" class="btn btn-success" style="flex: 1;" onclick="guardarCliente()">Guardar Cliente</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Historial de Cliente -->
+  <div id="modalHistorialCliente" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="modal-header">
+        <h3 id="tituloHistorialCliente">Historial de Cliente</h3>
+        <button class="close-modal" onclick="cerrarModal('modalHistorialCliente')">&times;</button>
+      </div>
+
+      <!-- Información del cliente -->
+      <div id="infoClienteHistorial" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <!-- Se carga dinámicamente -->
+      </div>
+
+      <!-- Tabla de compras -->
+      <h4 style="margin-bottom: 15px;">📦 Historial de Compras</h4>
+      <table id="tablaHistorialCompras">
         <thead>
           <tr>
-            <th>Fecha</th><th>Cajero</th><th>Cliente</th><th>Subtotal</th><th>Desc.</th><th>IVA</th><th>Total</th><th>Estado</th><th>Acción</th>
+            <th>Fecha</th>
+            <th>ID Venta</th>
+            <th>Productos</th>
+            <th>Total</th>
+            <th>Método</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody>
+          <!-- Se carga dinámicamente -->
+        </tbody>
       </table>
-      <div id="resumen">
-        <h3>Resumen</h3>
-        <p>Total Ventas: <b id="totalVentas">$0</b></p>
-        <p>Ventas Anuladas: <b id="ventasAnuladas">0</b></p>
-      </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
-  <footer class="foot"><small>© 2025 Inventario Maestro</small></footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, doc, addDoc, deleteDoc, updateDoc, getDoc, getDocs, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
-      authDomain: "inventario-b4431.firebaseapp.com",
-      projectId: "inventario-b4431",
-      storageBucket: "inventario-b4431.firebasestorage.app",
-      messagingSenderId: "229641140897",
-      appId: "1:229641140897:web:c1ac156045b0edbf110ee0"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const sesion = JSON.parse(localStorage.getItem("sesion_negocio") || "{}");
-    if (!sesion.id) {
-      alert("Inicia sesión primero");
-      location.href = "./login.html";
-    }
-
-    const formatoCOP = n => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP" }).format(n || 0);
-
-    /* ---------------- INVENTARIO ---------------- */
-    const refProductos = collection(db, `negocios/${sesion.id}/productos`);
-    const tbodyProd = document.querySelector("#tablaProductos tbody");
-
-    onSnapshot(refProductos, snap => {
-      tbodyProd.innerHTML = "";
-      snap.forEach(docu => {
-        const p = docu.data();
-        const ganancia = (p.precioVenta || 0) - (p.precioCompra || 0);
-        const tr = document.createElement("tr");
-        if (p.cantidad <= 5) tr.style.background = "#742a2a"; // bajo stock alerta
-        tr.innerHTML = `
-          <td>${p.codigo}</td>
-          <td>${p.nombre}</td>
-          <td>${p.cantidad}</td>
-          <td>${formatoCOP(p.precioCompra)}</td>
-          <td>${formatoCOP(p.precioVenta)}</td>
-          <td>${formatoCOP(ganancia)}</td>
-          <td>
-            <button class="btn editar" data-id="${docu.id}">✏️</button>
-            <button class="btn borrar" data-id="${docu.id}" style="background:#e63946;">🗑</button>
-          </td>`;
-        tbodyProd.appendChild(tr);
-      });
-
-      document.querySelectorAll(".borrar").forEach(b =>
-        b.onclick = async () => {
-          if (confirm("¿Eliminar producto?"))
-            await deleteDoc(doc(db, `negocios/${sesion.id}/productos/${b.dataset.id}`));
-        }
-      );
-
-      document.querySelectorAll(".editar").forEach(btn =>
-        btn.onclick = async () => {
-          const id = btn.dataset.id;
-          const snap = await getDoc(doc(db, `negocios/${sesion.id}/productos/${id}`));
-          const p = snap.data();
-          const nuevoNombre = prompt("Nuevo nombre:", p.nombre);
-          const nuevoCompra = parseFloat(prompt("Nuevo precio de compra:", p.precioCompra));
-          const nuevoVenta = parseFloat(prompt("Nuevo precio de venta:", p.precioVenta));
-          const nuevaCant = parseInt(prompt("Nueva cantidad:", p.cantidad));
-          if (!nuevoNombre || isNaN(nuevoVenta)) return;
-          await updateDoc(doc(db, `negocios/${sesion.id}/productos/${id}`), {
-            nombre: nuevoNombre, precioCompra: nuevoCompra, precioVenta: nuevoVenta, cantidad: nuevaCant
-          });
-        }
-      );
-    });
-
-    document.getElementById("formProducto").onsubmit = async e => {
-      e.preventDefault();
-      const p = {
-        codigo: codigo.value.trim(),
-        nombre: nombre.value.trim(),
-        cantidad: parseInt(cantidad.value),
-        precioCompra: parseFloat(precioCompra.value),
-        precioVenta: parseFloat(precioVenta.value)
-      };
-      await addDoc(refProductos, p);
-      e.target.reset();
-    };
-
-    /* ---------------- IMPORTAR INVENTARIO ---------------- */
-    document.getElementById("importInventario").onclick = () => {
-      document.getElementById("importFile").click();
-    };
-
-    document.getElementById("importFile").addEventListener("change", async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (evt) => {
-        const text = evt.target.result;
-        const filas = text.split("\n").map(f => f.trim()).filter(f => f.length);
-        const headers = filas[0].split(",");
-        const productos = filas.slice(1).map(row => {
-          const valores = row.split(",");
-          const obj = {};
-          headers.forEach((h, i) => obj[h.trim()] = valores[i]?.trim());
-          return obj;
-        });
-
-        let actualizados = 0, nuevos = 0;
-        for (const p of productos) {
-          if (!p.codigo || !p.nombre) continue;
-          const q = query(refProductos, where("codigo", "==", p.codigo));
-          const snap = await getDocs(q);
-          const data = {
-            codigo: p.codigo,
-            nombre: p.nombre,
-            cantidad: parseInt(p.cantidad || 0),
-            precioCompra: parseFloat(p.compra || 0),
-            precioVenta: parseFloat(p.venta || 0)
-          };
-          if (!snap.empty) {
-            await updateDoc(doc(db, `negocios/${sesion.id}/productos/${snap.docs[0].id}`), data);
-            actualizados++;
-          } else {
-            await addDoc(refProductos, data);
-            nuevos++;
-          }
-        }
-
-        alert(`✅ Importación completada.\nProductos nuevos: ${nuevos}\nActualizados: ${actualizados}`);
-      };
-      reader.readAsText(file);
-    });
-
-    /* ---------------- USUARIOS ---------------- */
-    const refNegocio = doc(db, "negocios", sesion.id);
-    const tbodyUser = document.querySelector("#tablaUsuarios tbody");
-
-    async function cargarUsuarios() {
-      const snap = await getDoc(refNegocio);
-      const data = snap.data();
-      tbodyUser.innerHTML = "";
-      (data.usuarios || []).forEach((u, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${u.usuario}</td><td>${u.rol}</td>
-          <td><button class="btn borrarUser" data-index="${i}" style="background:#e63946;">🗑</button></td>`;
-        tbodyUser.appendChild(tr);
-      });
-
-      document.querySelectorAll(".borrarUser").forEach(b =>
-        b.onclick = async () => {
-          if (!confirm("¿Eliminar este usuario?")) return;
-          const snap = await getDoc(refNegocio);
-          const data = snap.data();
-          data.usuarios.splice(b.dataset.index, 1);
-          await updateDoc(refNegocio, { usuarios: data.usuarios });
-          cargarUsuarios();
-        }
-      );
-    }
-
-    document.getElementById("formUsuario").onsubmit = async e => {
-      e.preventDefault();
-      const snap = await getDoc(refNegocio);
-      const data = snap.data();
-      const usuarios = data.usuarios || [];
-      usuarios.push({
-        usuario: usuario.value.trim(),
-        passwordHash: clave.value.trim(),
-        rol: rol.value
-      });
-      await updateDoc(refNegocio, { usuarios });
-      e.target.reset();
-      cargarUsuarios();
-    };
-
-    cargarUsuarios();
-
-    /* ---------------- VENTAS ---------------- */
-    const refVentas = collection(db, `negocios/${sesion.id}/ventas`);
-    const tbodyVentas = document.querySelector("#tablaVentas tbody");
-
-    onSnapshot(refVentas, snap => {
-      tbodyVentas.innerHTML = "";
-      let total = 0, anuladas = 0;
-      snap.forEach(d => {
-        const v = d.data();
-        const fecha = v.fecha ? new Date(v.fecha) : new Date();
-        if (v.estado === "anulada") anuladas++;
-        else total += v.totalFinal || v.total || 0;
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${fecha.toLocaleString()}</td>
-          <td>${v.cajero || "(sin cajero)"}</td>
-          <td>${v.cliente?.nombre || "-"}</td>
-          <td>${formatoCOP(v.subtotal || 0)}</td>
-          <td>${v.descuento || 0}%</td>
-          <td>${v.iva || 0}%</td>
-          <td>${formatoCOP(v.totalFinal || v.total || 0)}</td>
-          <td>${v.estado || "activa"}</td>
-          <td>${v.estado === "activa" ? `<button class="btn anular" data-id="${d.id}" style="background:#e63946;">❌</button>` : "-"}</td>`;
-        tbodyVentas.appendChild(tr);
-      });
-
-      document.getElementById("totalVentas").textContent = formatoCOP(total);
-      document.getElementById("ventasAnuladas").textContent = anuladas;
-
-      document.querySelectorAll(".anular").forEach(btn =>
-        btn.onclick = async () => {
-          if (confirm("¿Anular esta venta?"))
-            await updateDoc(doc(db, `negocios/${sesion.id}/ventas/${btn.dataset.id}`), { estado: "anulada" });
-        }
-      );
-    });
-
-    /* ---------------- EXPORTAR CSV ---------------- */
-    function exportarCSV(nombre, datos) {
-      const encabezados = Object.keys(datos[0]).join(",");
-      const filas = datos.map(d => Object.values(d).join(",")).join("\n");
-      const csv = encabezados + "\n" + filas;
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${nombre}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    document.getElementById("exportVentas").onclick = async () => {
-      const snap = await getDocs(refVentas);
-      const datos = [];
-      snap.forEach(v => {
-        const d = v.data();
-        datos.push({
-          fecha: new Date(d.fecha).toLocaleString(),
-          cajero: d.cajero,
-          cliente: d.cliente?.nombre || "",
-          subtotal: d.subtotal || 0,
-          descuento: d.descuento || 0,
-          iva: d.iva || 0,
-          total: d.totalFinal || d.total || 0,
-          estado: d.estado
-        });
-      });
-      exportarCSV("ventas", datos);
-    };
-
-    document.getElementById("exportInventario").onclick = async () => {
-      const snap = await getDocs(refProductos);
-      const datos = [];
-      snap.forEach(p => {
-        const d = p.data();
-        datos.push({
-          codigo: d.codigo,
-          nombre: d.nombre,
-          cantidad: d.cantidad,
-          compra: d.precioCompra,
-          venta: d.precioVenta,
-          ganancia: (d.precioVenta - d.precioCompra)
-        });
-      });
-      exportarCSV("inventario", datos);
-    };
-
-    /* ---------------- LOGOUT ---------------- */
-    logoutBtn.onclick = () => {
-      localStorage.clear();
-      location.href = "./login.html";
-    };
-  </script>
 </body>
 </html>

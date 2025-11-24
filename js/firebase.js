@@ -1,5 +1,23 @@
+// js/firebase.js - Configuración Firebase
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  increment
+} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
@@ -11,8 +29,28 @@ const firebaseConfig = {
   measurementId: "G-RG2Y7DXCEC"
 };
 
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db = getFirestore(app);
 
-// Exponer SDK al global para scripts no-módulo
-window.FB = { db, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, query, where };
+// Exponer Firebase al global para scripts no-módulo
+window.FB = {
+  app,
+  db,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  onSnapshot,
+  increment
+};
+
+console.log("✅ Firebase inicializado correctamente");

@@ -1,116 +1,148 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registrar negocio</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro - Inventario Maestro</title>
   <link rel="stylesheet" href="./css/estilos.css">
-</head>
+  <link rel="shortcut icon" href="img/logo.png" />
 
-<body>
-  <header class="topbar">
-    <img src="./img/logo.png" class="logo" alt="logo">
-    <h1>Crear cuenta de negocio</h1>
-    <nav>
-      <a class="link" href="./login.html">Ya tengo cuenta</a>
-    </nav>
-  </header>
-
-  <main class="container narrow">
-    <form id="registroForm" class="card">
-      <h2>Nuevo negocio</h2>
-      <label>Nombre del negocio</label>
-      <input type="text" id="nombre" required>
-
-      <label>Correo</label>
-      <input type="email" id="correo" required>
-
-      <label>Contraseña (admin)</label>
-      <input type="password" id="pass" required>
-
-      <button class="btn" type="submit">Crear cuenta</button>
-      <p class="muted">
-        Se creará un usuario <b>admin</b> y un <b>cajero</b> inicial para configurar.
-      </p>
-    </form>
-  </main>
-
-  <footer class="foot">
-    <small>© 2025 Inventario Maestro</small>
-  </footer>
-
-  <!-- Stub UI -->
-  <script>
-    window.UI = {
-      requireOnlineBanner(){},
-      toast(m){ console.log('[toast]', m); }
-    };
-  </script>
-
-  <!-- FIREBASE COMO MÓDULO -->
-  <script type="module">
-    console.log("Inicializando Firebase...");
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyByhD4vM7DCjjIOBoaUuLH_wRh93DcRdkw",
-      authDomain: "inventario-b4431.firebaseapp.com",
-      projectId: "inventario-b4431",
-      storageBucket: "inventario-b4431.firebasestorage.app",
-      messagingSenderId: "229641140897",
-      appId: "1:229641140897:web:c1ac156045b0edbf110ee0",
-      measurementId: "G-RG2Y7DXCEC"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    window.FB = { db, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, query, where };
-    console.log("✅ Firebase inicializado correctamente");
-
-    // Cargar storage.js y luego negocio.js secuencialmente
-    async function cargarScript(src){
-      return new Promise((resolve, reject)=>{
-        const s = document.createElement("script");
-        s.src = src;
-        s.onload = () => { console.log("Cargado:", src); resolve(); };
-        s.onerror = () => reject(`Error cargando ${src}`);
-        document.body.appendChild(s);
-      });
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
     }
+    
+    .registro-container {
+      width: 100%;
+      max-width: 480px;
+    }
+    
+    .registro-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .registro-header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    
+    .password-hint {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+    
+    .registro-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="registro-container">
+    <div class="registro-header">
+      <h1>Crear Cuenta</h1>
+      <p style="color: var(--text-secondary);">Registra tu negocio</p>
+    </div>
 
-    // Secuencia completa
-    (async ()=>{
-      try {
-        await cargarScript("./js/storage.js");
-        await cargarScript("./js/negocio.js");
-        console.log("✅ Todos los módulos cargados");
+    <div class="card">
+      <div id="errorMsg" style="display:none;"></div>
+      <div id="successMsg" style="display:none;"></div>
 
-        // Ahora sí el form
-        const form = document.getElementById("registroForm");
-        form.addEventListener("submit", async (e)=>{
-          e.preventDefault();
-          console.log("📩 Enviando formulario...");
-          const nombre = document.getElementById("nombre").value.trim();
-          const correo = document.getElementById("correo").value.trim();
-          const pass   = document.getElementById("pass").value;
+      <form id="registroForm">
+        <div class="form-group">
+          <label for="nombre">Nombre del negocio</label>
+          <input 
+            type="text" 
+            id="nombre" 
+            placeholder="Mi Tienda" 
+            required 
+            autofocus
+          >
+        </div>
 
-          try {
-            console.log("→ Llamando a Negocio.registrarNegocio...");
-            await Negocio.registrarNegocio(nombre, correo, pass);
-            UI.toast("Cuenta creada correctamente. Ahora inicia sesión.");
-            console.log("✅ Registro completado.");
-            location.href = "./login.html";
-          } catch(err){
-            UI.toast(err.message || "No se pudo registrar el negocio");
-            console.error("❌ [Error Registro]", err);
-          }
-        });
+        <div class="form-group">
+          <label for="correo">Correo electrónico</label>
+          <input 
+            type="email" 
+            id="correo" 
+            placeholder="contacto@mitienda.com" 
+            required
+          >
+        </div>
 
-      } catch (err) {
-        console.error("Fallo en la secuencia:", err);
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input 
+            type="password" 
+            id="password" 
+            placeholder="Mínimo 8 caracteres" 
+            required
+          >
+          <p class="password-hint">
+            La contraseña debe tener al menos 8 caracteres
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="passwordConfirm">Confirmar contraseña</label>
+          <input 
+            type="password" 
+            id="passwordConfirm" 
+            placeholder="Repite tu contraseña" 
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn success" style="width:100%;">
+          Crear Cuenta
+        </button>
+      </form>
+
+      <div class="registro-footer">
+        <p>¿Ya tienes cuenta? <a href="./login.html">Inicia sesión</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="./js/firebase.js"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/negocio.js"></script>
+  
+  <script>
+    document.getElementById('registroForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const nombre = document.getElementById('nombre').value.trim();
+      const correo = document.getElementById('correo').value.trim();
+      const password = document.getElementById('password').value;
+      const passwordConfirm = document.getElementById('passwordConfirm').value;
+      
+      // Validar que las contraseñas coincidan
+      if (password !== passwordConfirm) {
+        Utils.showError('Las contraseñas no coinciden');
+        return;
       }
-    })();
+      
+      try {
+        await Negocio.registrarNegocio(nombre, correo, password);
+        Utils.showSuccess('Cuenta creada exitosamente. Redirigiendo...');
+        setTimeout(() => window.location.href = './login.html', 2000);
+      } catch (err) {
+        Utils.showError(err.message);
+      }
+    });
   </script>
 </body>
 </html>
